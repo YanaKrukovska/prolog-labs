@@ -3,18 +3,21 @@ artist(1, "Oleg Vynnyk", date(1973, 07, 31)).
 artist(2, "Oasis", date(1991, 08, 1)).
 artist(3, "Liam Gallagher", date(1972, 09, 21)).
 artist(4, "Queen", date(1972, 09, 21)).
+artist(5, "Rammstein", date(1994, 01, 01)).
 
 % альбом(+id_альбому, +назва_альбому, +дата_релізу_альбому).
 album(1, "Roksolana", date(2013, 10, 25)).
 album(2, "(What's the Story) Morning Glory?", date(1995, 10, 2)).
 album(3, "MTV Unplugged (Live at Hull City Hall)", date(2020, 06, 12)).
 album(4, "Innuendo", date(1990, 06, 12)).
+album(5, "Mutter", date(2001, 04, 02)).
 
 % пісня(+id_пісні, +id_артиста, +назва_пісні, жанри(перший_жанр, другий_жанр)). Наперед визначена кількість жанрів = 2
 song(1, 1, "Vovchytsia", genres("pop", "pop rock")).
 song(2, 2, "Don't Look Back In Anger", genres("britpop", "rock")).
 song(3, 2, "Champagne Supernova", genres("britpop", "rock")).
 song(4, 4, "Show Must Go On", genres("classic rock", "rock")).
+song(5, 5, "Mein Herz Brennt", genres("industrial metal", "symphonic metal")).
 
 % прослуховування(+id_прослуховування, +id_користувача, +id_пісні, +дата_прослуховування).
 scrobble(1, 1, 1, datetime(2021, 3, 3, 12, 08, 56)).
@@ -32,6 +35,8 @@ scrobble(12, 4, 1, datetime(2021, 2, 28, 10, 05, 21)).
 scrobble(13, 4, 2, datetime(2021, 2, 28, 10, 05, 21)).
 scrobble(14, 4, 3, datetime(2021, 2, 28, 10, 05, 21)).
 scrobble(15, 5, 4, datetime(2021, 2, 28, 10, 05, 21)).
+scrobble(16, 6, 5, datetime(2021, 4, 5, 00, 07, 19)).
+scrobble(17, 7, 5, datetime(2021, 4, 5, 01, 22, 40)).
 
 % користувач(+id_користувача, +ім'я_користувача, +пошта, +дата_народження).
 user(1, full_name("Vasya", "Ivanovich"), "vasya@gmail.com", date(1980, 4, 20), ["android", "web"]).
@@ -39,12 +44,15 @@ user(2, full_name("Elon", "Mask"), "elon@gmail.com", date(1990, 1, 1), ["ios"]).
 user(3, full_name("John", "Doe"), "john@gmail.com", date(1980, 7, 30), ["ios", "web"]).
 user(4, full_name("Artem", "Budaiev"), "budaiev@gmail.com", date(2001, 01, 25), ["ios", "web"]).
 user(5, full_name("Poopa", "Lupovich"), "poopa@gmail.com", date(2010, 01, 25), ["web"]).
+user(6, full_name("Yana", "Krukovska"), "yana@gmail.com", date(2001, 09, 05), ["android"]).
+user(7, full_name("Jane", "Doe"), "jane@gmail.com", date(1960, 05, 17), ["android", "web"]).
 
 % Декомпозиція атрибуту "видання" у альбому
 % альбом_має_видання(+id_альбому, +назва_видання).
 has_edition(2, "Japanese Bonus Track Edition").
 has_edition(2, "Remastered").
-has_edition(2, "Vynil Version").
+has_edition(5, "Limited Tour Edition").
+has_edition(5, "Turkish Cassette").
 
 % Реалізація зв'язку N до М між сутностями "пісня" та "альбом"
 містить_пісні(+id_альбому, +id_пісні).
@@ -53,6 +61,7 @@ has_songs(2, 2).
 has_songs(2, 3).
 has_songs(3, 4).
 has_songs(4, 4).
+has_songs(5, 5).
 
 
 % Допоміжні правила
@@ -147,61 +156,70 @@ ages([Id|Ids], Ages):-
 Користувач слухає_альбом Альбом з_програми Програма :- setof(К ,((К слухає_альбом Альбом), (К з_програми Програма)), Користувач).
 
 
+
 % Тестова частина
 
 % Запит №1
 
 :- writeln("Які користувачі слухають ТІ пісні, що і користувач з логіном poopa@gmail.com?").
 :- request1("poopa@gmail.com", X), writeln(X).
-% Результат: [elon@gmail.com, ivan@gmail.com]
+% Результат: X = [elon@gmail.com, john@gmail.com]
 
 :- writeln("Які користувачі слухають ТІ пісні, що і користувач з логіном vasya@gmail.com?").
 :- request1("vasya@gmail.com", X), writeln(X).
-% Результат: [budaiev@gmail.com, elon@gmail.com, ivan@gmail.com]
-
+% Результат: X = [budaiev@gmail.com, elon@gmail.com, john@gmail.com]
 
 
 % Запит №2
 
-:- writeln("Які користувачі слухають ТІЛЬКИ ТІ пісні, що і користувач з логіном ivan@gmail.com?").
-:- forall(request2("ivan@gmail.com", X), writeln(X)).
+:- writeln("Які користувачі слухають ТІЛЬКИ ТІ пісні, що і користувач з логіном john@gmail.com?").
+:- request2("john@gmail.com", X), writeln(X).
+% Результат: X = [budaiev@gmail.com, elon@gmail.com, poopa@gmail.com, vasya@gmail.com]
 
 :- writeln("Які користувачі слухають ТІЛЬКИ ТІ пісні, що і користувач з логіном vasya@gmail.com?").
-:- forall(request2("vasya@gmail.com", X), writeln(X)).
-
+:- request2("vasya@gmail.com", X), writeln(X).
+% Результат: X = [budaiev@gmail.com]
 
 
 % Запит №3
 
-:- writeln("Які користувачі слухають ВСІ ТІ пісні, що і користувач з логіном ivan@gmail.com?").
-:- forall(request3("ivan@gmail.com", X), writeln(X)).
+:- writeln("Які користувачі слухають ВСІ ТІ пісні, що і користувач з логіном john@gmail.com?").
+:- forall(request3("john@gmail.com", X), writeln(X)).
+% Результат: X = []
 
 :- writeln("Які користувачі слухають ВСІ ТІ пісні, що і користувач з логіном elon@gmail.com?").
-:- forall(request3("elon@gmail.com", X), writeln(X)).
-
+:- request3("elon@gmail.com", X), writeln(X).
+% Результат: X = [john@gmail.com]
 
 
 % Запит №4
 
-:- writeln("Які користувачі слухають ВСІ ТІ І ТІЛЬКИ ТІ пісні, що і користувач з логіном ivan@gmail.com?").
-:- forall(request4("ivan@gmail.com", X), writeln(X)).
+:- writeln("Які користувачі слухають ВСІ ТІ І ТІЛЬКИ ТІ пісні, що і користувач з логіном yana@gmail.com?").
+:- request4("yana@gmail.com", X), writeln(X).
+% Результат: X = [jane@gmail.com]
 
 :- writeln("Які користувачі слухають ВСІ ТІ І ТІЛЬКИ ТІ пісні, що і користувач з логіном budaiev@gmail.com?").
-:- forall(request4("budaiev@gmail.com", X), writeln(X)).
-
+:- request4("budaiev@gmail.com", X), writeln(X).
+% Результат: X = [vasya@gmail.com]
 
 
 % Запит №5
 
 :- writeln("СЕРЕДНІЙ ВІК користувачів, які слухають виконавця Oleg Vynnyk").
-:- forall(request5("Oleg Vynnyk", X), writeln(X)).
+:- request5("Oleg Vynnyk", X), writeln(X).
+% Результат: X = 34
+
+:- writeln("СЕРЕДНІЙ ВІК користувачів, які слухають виконавця Rammstein").
+:- request5("Rammstein", X), writeln(X).
+% Результат: X = 40.5
 
 
+% Оператор
 
-% Оператори
+:- writeln("Хто слухає_альбом (What's the Story) Morning Glory? з_програми ios").
+:- Хто слухає_альбом "(What's the Story) Morning Glory?" з_програми "ios", writeln(Хто).
+% Хто = ["budaiev@gmail.com", "elon@gmail.com", "john@gmail.com"].
 
-% Хто слухає_альбом "(What's the Story) Morning Glory?" з_програми "ios".
-% Хто = ["budaiev@gmail.com", "elon@gmail.com", "ivan@gmail.com"].
-
-% Хто слухає_альбом "(What's the Story) Morning Glory?" з_програми "android".
+:- writeln("Хто слухає_альбом (What's the Story) Morning Glory? з_програми android").
+:- Хто слухає_альбом "(What's the Story) Morning Glory?" з_програми "android", writeln(Хто).
 % Хто = ["vasya@gmail.com"].
