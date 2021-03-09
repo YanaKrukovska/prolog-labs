@@ -1,0 +1,90 @@
+% 1. Послідовності вузлів при обході в глибину бінарного дерева праворуч. binaryTreeTraversal(+дерево_яке_обходимо, -послідовність_вузлів)
+binaryTreeTraversal(nil, []) :- !.
+binaryTreeTraversal(tree(Left, X, Right), Res) :- binaryTreeTraversal(Left, LeftRes), binaryTreeTraversal(Right, RightRes), append(LeftRes, [X|RightRes], Res), !.
+
+% 2. Визначення кількості листків бінарного дерева. binaryTreeLeaf(+дерево_яке_перевіряємо, -визначена_кількість_листків).
+binaryTreeLeaf(nil, 0).
+binaryTreeLeaf(tree(nil, _, nil), 1) :- !.
+binaryTreeLeaf(tree(Left, _, Right), Res) :- binaryTreeLeaf(Left, LeftRes), binaryTreeLeaf(Right, RightRes), Res is LeftRes + RightRes, !.
+
+% 3. Визначення висоти бінарного дерева. binaryTreeHeight(+дерево_яке_перевіряємо, -визначена_висота).
+binaryTreeHeight(nil, 0).
+binaryTreeHeight(tree(Left, _, Right), Res) :- binaryTreeHeight(Left, LeftRes), binaryTreeHeight(Right, RightRes), Res is 1 + max(LeftRes, RightRes).
+
+% 4. Визначення кількості вузлів у бінарному дереві. binaryTreeNodes(+дерево_яке_перевіряємо, -визначена_кількість_вузлів).
+binaryTreeNodes(nil, 0).
+binaryTreeNodes(tree(Left, _, Right), Res) :- binaryTreeNodes(Left, LeftRes), binaryTreeNodes(Right, RightRes), Res is LeftRes + RightRes + 1, !.
+
+% 5. Обхід 2-3-дерева. tree23Traversal(+дерево_яке_обходимо, -результат_обходу)
+tree23Traversal(nil, []) :- !.
+tree23Traversal(l(E), [E]) :- !.
+tree23Traversal(v2(Left, X, Right), Res) :- tree23Traversal(Left, LeftRes), tree23Traversal(Right, RightRes), append(LeftRes, [X|RightRes], Res),!.
+tree23Traversal(v3(Left, X, Middle, Y, Right), Res) :- tree23Traversal(Left, LeftRes), tree23Traversal(Middle, MiddleRes), tree23Traversal(Right, RightRes),
+  append(LeftRes, [X|MiddleRes], Temp1), append(Temp1, [Y|RightRes], Res), !.
+
+% 6. Пошук заданого елемента в 2-3-дереві. findElemIn23Tree(+дерево_в_якому_шукаємо, +елемент_який_шукаємо). На виході true або false залежно від наявності елемента у дереві
+findElemIn23Tree(l(E), E) :- !.
+findElemIn23Tree(v2(_, E, _), E) :- !.
+findElemIn23Tree(v2(Left, _, _), E) :- findElemIn23Tree(Left, E), !.
+findElemIn23Tree(v2(_, _, Right), E) :- findElemIn23Tree(Right, E), !.
+findElemIn23Tree(v3(_, E, _, _, _), E) :- !.
+findElemIn23Tree(v3(_, _, _, E, _), E) :- !.
+findElemIn23Tree(v3(Left, X, Middle, Y, Right), E) :- (X = E; Y = E; findElemIn23Tree(Left, E); findElemIn23Tree(Middle, E); findElemIn23Tree(Right, E)),!.
+
+% 7. Написати програму, яка перевірить чи є заданий об'єкт бінарним деревом. isBinaryTree(+дерево_яке_перевіряємо). На виході true або false залежно від того, чи є дерево бінарним
+isBinaryTree(nil) :- !.
+isBinaryTree(tree(Left, X, Right)) :- X \= nil, X \= tree(_, _, _), isBinaryTree(Right), isBinaryTree(Left), !.
+
+% 8. Написати програму, яка перевірить чи є заданий об'єкт 2-3 деревом. is23Tree(+дерево_яке_перевіряємо). На виході true або false залежно від того, чи є дерево 2-3 деревом
+is23Tree(nil) :- !.
+is23Tree(v2(Left, _, Right)) :- is23Tree(Left), is23Tree(Right).
+is23Tree(v3(Left, _, Middle, _, Right)) :- is23Tree(Left), is23Tree(Middle), is23Tree(Right).
+
+
+% Тестові запити
+
+% Запит №1
+% binaryTreeTraversal(tree(tree(tree(nil, 'a', nil), 'b', tree(nil, 'c', nil)), 'd', tree(nil, 'e', tree(tree(nil, 'f', nil), 'g', nil))), Res).
+% Результат: Res = [a, b, c, d, e, f, g].
+
+% Запит №2
+% binaryTreeLeaf(tree(tree(tree(nil, 'a', nil), 'b', tree(nil, 'c', nil)), 'd', tree(nil, 'e', tree(tree(nil, 'f', nil), 'g', nil))), Res).
+% Результат: Res = 3
+% binaryTreeLeaf(tree(nil, 'a', nil), Res).
+% Результат: Res = 1
+
+% Запит №3
+% binaryTreeHeight(tree(tree(tree(nil, 'a', nil), 'b', tree(nil, 'c', nil)), 'd', tree(nil, 'e', tree(tree(nil, 'f', nil), 'g', nil))), Res). 
+% Результат: Res = 4
+% binaryTreeHeight(nil, Res). 
+% Результат: Res = 0
+
+% Запит №4
+% binaryTreeNodes(tree(tree(tree(nil, 'a', nil), 'b', tree(nil, 'c', nil)), 'd', tree(nil, 'e', tree(tree(nil, 'f', nil), 'g', nil))), Res). 
+% Результат: Res = 7
+% binaryTreeNodes(nil, Res). 
+% Результат: Res = 0
+
+% Запит №5
+% tree23Traversal(v3(l('a'), 'b', l('c'), 'd', v3(nil, 'e', nil, 'f', nil)), Res).   
+% Результат: Res = [a, b, c, d, e, f].
+% tree23Traversal(nil, Res).
+% Результат: Res = [].
+
+% Запит №6
+% findElemIn23Tree(v3(l('a'), 'b', l('c'), 'd', v3(nil, 'e', nil, 'f', nil)), 'e').
+% Результат: true
+% findElemIn23Tree(v3(l('a'), 'b', l('c'), 'd', v3(nil, 'e', nil, 'f', nil)), 'z').
+% Результат: false
+
+% Запит %7
+% isBinaryTree(tree(tree(tree(nil, 'a', nil), 'b', tree(nil, 'c', nil)), 'd', tree(nil, 'e', tree(tree(nil, 'f', nil), 'g', nil)))).
+% Результат: true
+% isBinaryTree(tree(tree(tree(nil, 'a', nil), 'b', tree(nil, 'c', nil)))).
+% Результат: false
+
+% Запит %8
+% is23Tree(v2(nil, v3(v2(nil, 'a', nil),'b',v2(nil,'c',nil),'d',v2(nil,'e',nil)), nil)).
+% Результат: true
+% is23Tree(v3(v2(nil, 'a', nil), 'b', v2(nil, 'c', nil))).
+% Результат: false
