@@ -1,0 +1,144 @@
+% Виклики ініціалізації %
+
+% Ініціалізація дошки (8 колонок, 8 рядків): initialize(дошка).
+board([[' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - '],
+	       [' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - '],
+	       [' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - '],
+	       [' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - '],
+	       [' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - '],
+	       [' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - '],
+	      [' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - '],
+		  [' - ',' - ',' - ',' - ',' - ',' - ',' - ',' - ']]).
+
+
+
+% Виклики відображення %
+
+% Виклик відображення дошки: showBoardBoard(+дошка_яку_відображаємо).
+showBoard(Board) :- nl, write('    0  1   2  3   4   5  6  7'), showLines(Board, 0), nl.
+
+% Відображає номери рядків та викликає відображення рядка: showLines(+дошка, +номер_рядка). Номер рядка від 1 до 8.
+showLines(_, 8).
+showLines(Board, LineNumber):- nl, write(LineNumber), write(' '), showLine(Board, NewBoard), N1 is LineNumber + 1, showLines(NewBoard, N1).
+
+% Відображає один рядок: showLine(+дошка, -нова_дошка).
+showLine([], _).
+showLine([[X|X2]|XS],[X2|XS2]):- write(X), write(' '), showLine(XS, XS2).
+
+% Пише крок машини: printMachine(+крок_який_обрала_машина)
+printMachine(Column) :- nl, write('Хід опонента: '), write(Column), nl.
+
+
+
+% Початок гри % 
+
+% Починає гру: ініціалізує дошку, відображає її та очікує на перший крок від гравця ('x').
+start :- getGameMode(GameMode), board(X), showBoard(X), makeMove(GameMode, ' x ', X), !.
+
+
+
+% Зчитування даних користувача %
+
+% Отримання режиму гри: getGameMode(+отриманий_режим_гри). 1 - гра проти компютера, 2 - між 2 гравцями
+getGameMode(GameMode) :- nl, write('Оберіть режим гри. 1 - проти комп\'ютера, 2 - для двох гравців: '), repeat, get_char(Char), atom_number(Char, GameMode), (GameMode = 1 ; GameMode = 2 -> !, true ; fail).
+
+% Зчитує колонку, в якій користувач хоче зробити хід. Приймає рядок, поки він не буде коректним. getUserColumn(+отриманий_номер_колонки)
+getUserColumn(Column) :- nl, write('Введіть номер колонки: '), repeat, get_char(Char), atom_number(Char, Column), !.
+
+
+
+% Перевірка дошки % 
+
+% Перевіряє, чи є на дошці пусте місце. True, якщо вона заповнена: isFull(+дошка)
+isFull(Board) :- not(boardHasEmpty(' - ', Board)).
+
+% Перевіряє, чи на дошці є елемент: boardHasEmpty(+елемент_що_шукаємо, +дошка)
+boardHasEmpty(Element, Board) :- member(Line, Board), member(Element, Line).
+
+
+
+% Ігровий процес %
+
+% Гравець Х або О робить хід. Якщо гра не закінчилася, робиться хід: makeMove(+гравець_що_робить_хід, +дошка).
+
+% Якщо дошка повна, то нічия
+makeMove(_, _, Board) :- isFull(Board), write('Нічия').
+
+% Режим гри проти комп'ютера (гравець - Х, комп'ютер - О
+% Якщо перемогла машина, вивести відповідне повідомлення. Інакше розрахувати крок гравця
+makeMove(1, ' x ', Board) :- (hasWon(' o ', Board) -> write('Машина перемогла...');
+repeat, getUserColumn(Column), play(' x ', Column, Board, NewBoard), !, switchMove(1, NewBoard, ' o ')). 
+
+% Якщо переміг гравець, вивести відповідне повідомлення. Інакше чекати на крок машини
+makeMove(1, ' o ', Board) :- (hasWon(' x ', Board) -> write('Це перемога!');  machine(' o ', ' x ', Board, NewBoard), switchMove(1, NewBoard, ' x ')).
+
+% В режимі гри на 2 гравців:
+makeMove(2, ' o ', Board) :- hasWon(' x ', Board), write('Перемога гравця 1!').
+makeMove(2, ' x ', Board) :- hasWon(' o ', Board), write('Перемога гравця 2!').
+makeMove(2, ' x ', Board) :- nl, write('Гравець 1: '), repeat, getUserColumn(Column), play(' x ', Column, Board, NewBoard), !, switchMove(2, NewBoard, ' o '). 
+makeMove(2, ' o ', Board) :- nl, write('Гравець 2: '), repeat, getUserColumn(Column), play(' o ', Column, Board, NewBoard), !, switchMove(2, NewBoard, ' x '). 
+
+% Відображає дошку після останнього ходу та перемикає крок на іншого гравця
+switchMove(GameMode, Board, Player) :- showBoard(Board), (Player \= ' x ' -> makeMove(GameMode, ' o ', Board); makeMove(GameMode, ' x ', Board)). 
+
+% Робить крок гравця: player(+гравець, +колонка, +дошка, -дошка_після_кроку)
+play(Player, Column, Board, BoardAfterMove) :- append(Start, [C|CS], Board),
+											   length(Start, Column),
+											   insertIntoColumn(Player, C, C2),
+											   append(Start, [C2|CS], BoardAfterMove).
+
+% Вставляння кроку в колонку : insertIntoColumn(+гравець, +початкова_колонка, -оновлена_колонка)
+insertIntoColumn(Player, [' - '], [Player]).
+insertIntoColumn(Player, [' - ', X|Under], [Player, X|Under]) :- X \== (' - '), !.
+insertIntoColumn(Player, [' - '|Under], [' - '|Under2]) :- insertIntoColumn(Player, Under, Under2).
+
+
+
+% Перевіряє, чи хтось переміг: hasWon(+гравець, +дошка).
+
+% Перевіряє чи є чотири однакових символи в рядку.
+hasWon(Player, Board) :-  append(_, [C1, C2, C3, C4 | _], Board), checkRows(C1, C2, C3, C4, Player).
+
+% Перевіряє чи є чотири однакових символи в стовпчику.
+hasWon(Player, Board) :- append(_, [Column | _], Board), checkColumns(Column, Player).
+		   
+% Перевіряє чи є чотири однакових символи в діагоналі з лівого кутка у правий \
+hasWon(Player, Board) :- append(_, [C1, C2, C3, C4 | _], Board),
+						C2 = [_ | C22],
+						C3 = [_, _ | C32],
+						C4 = [_, _, _ | C42],
+						checkRows(C1, C22, C32, C42, Player).
+		   
+%  Перевіряє чи є чотири однакових символи в діагоналі з правого кутка у лівий /
+hasWon(Player, Board) :- append(_, [C1, C2, C3, C4 | _], Board),
+						 C1 = [_, _, _ | C12],
+						 C2 = [_, _ | C22],
+						 C3 = [_ | C32],
+						 checkRows(C12, C22, C32, C4, Player).
+
+% Допоміжне правило перевірки колонок
+checkColumns([Player, Player, Player, Player | _], Player).
+checkColumns([_ | ColBelow], Player) :- checkColumns(ColBelow, Player).
+
+% Допоміжне правило перевірки рядків
+checkRows([Player | _], [Player | _], [Player | _], [Player | _], Player).
+checkRows([_ | Below1], [_ | Below2], [_ | Below3], [_ | Below4], Player) :- checkRows(Below1, Below2, Below3, Below4, Player).
+
+
+
+% Обрахування ходу машини
+
+% Якщо є переможний крок, виконати його.
+machine(Move, _, Board, NewBoard) :- canMachineWin(Move, Board, Column, NewBoard), printMachine(Column), !.
+
+% Якщо не можна виграти за один крок, попередити виграш опонента і забезпечити виграш собі
+machine(Move, Opponent, Board, NewBoard):- findall((Col, PB), (play(Move, Col, Board, PB), not(canMachineWin(Opponent, PB, _, _))), [(C, NewBoard)|_]), printMachine(C), !.
+
+% Інакше попередити крок опонента
+machine(Move, Opponent, Board, NewBoard):- canMachineWin(Opponent, Board, C, _), play(Move, C, Board, NewBoard), printMachine(C), !.
+			
+% В іншому випадку будь-який крок
+machine(Move, _, Board, NewBoard):- play(Move, Column, Board, NewBoard), printMachine(Column), !.
+
+% Чи може машина зробити крок в колонці і виграти: canMachineWin(+хід_машини, +дошка, +колонка, +оновлена_дошка)
+canMachineWin(Machine, Board, Column, T2) :- findall((Col, TA), (play(Machine, Col, Board, TA), hasWon(Machine, TA)),[(Column, T2)|_]).
